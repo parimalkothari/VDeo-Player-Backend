@@ -1,15 +1,22 @@
-import express, { urlencoded } from "express"
-import cookieParser from "cookie-parser"
-import cors from "cors"
-const app=express()
+import express, { urlencoded } from "express";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+const app = express();
 
-app.use(cors({
-    origin: process.env.CORS_ORIGIN
-}))
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN,
+  })
+);
 
-app.use(urlencoded({extended:true}))
-app.use(express.json({limit:"16kb"}))
-app.use(express.static("public"))
-app.use(cookieParser())
+app.use(urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.static("public"));
+app.use(cookieParser());
 
-export default app
+//routes
+import userRouter from "./routes/users.routes.js";
+
+app.use("/api/v1/users", userRouter);
+
+export default app;
