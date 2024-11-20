@@ -14,8 +14,8 @@ const generateAccessAndRefreshTokens = async (newUser) => {
     return { accessToken, refreshToken };
   } catch (error) {
     res.status(500).json({
-      error: error.message
-    })
+      error: error.message,
+    });
   }
 };
 const registerUser = asyncHandler(async (req, res) => {
@@ -149,7 +149,6 @@ const logOutUser = asyncHandler(async (req, res) => {
     { $set: { refreshToken: "" } },
     { new: true }
   ); //new true gives update user as result
-  console.log(loggedInUser);
 
   const options = {
     httpOnly: true,
@@ -162,26 +161,147 @@ const logOutUser = asyncHandler(async (req, res) => {
     .json(new apiResponse(201, {}, "User logged out"));
 });
 
-const refreshAccessToken = asyncHandler(async(req,res)=>{
-    const incomingRefreshToken= req.cookies.refreshToken
-    if(!incomingRefreshToken){
-      throw new apiError(401,"Unauthorized access")
-    }
-    const user= await User.findById(req.user._id)
-    if(incomingRefreshToken!=user.refreshToken){
-      throw new apiError("Refresh Token expired or Invalid!")
-    }
-    const {accessToken,refreshToken}=await generateAccessAndRefreshTokens(user)
-    const options={
-      httpOnly:true,
-      secure:true
-    }
-    res
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken = req.cookies.refreshToken;
+  if (!incomingRefreshToken) {
+    throw new apiError(401, "Unauthorized access");
+  }
+  const user = await User.findById(req.user._id);
+  if (incomingRefreshToken != user.refreshToken) {
+    throw new apiError("Refresh Token expired or Invalid!");
+  }
+  const { accessToken, refreshToken } =
+    await generateAccessAndRefreshTokens(user);
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+  res
     .status(201)
-    .cookie('accessToken',accessToken,options)
-    .cookie('refreshToken',refreshToken,options)
-    .json(new apiResponse(201, "Access Token is Refreshed"))
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(new apiResponse(201, "Access Token is Refreshed"));
+});
 
-})
+const updateCurrentPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword, confPassword } = req.body;
+  if (
+    [oldPassword, newPassword, confPassword].some((field) => {
+      return field.trim() == "";
+    })
+  ) {
+    throw new apiError(403, "Password cannot be empty");
+  }
 
-export { registerUser, loginUser, logOutUser, refreshAccessToken };
+  if (newPassword != confPassword) {
+    throw new apiError(400, "New Password and Confirm Password should be same");
+  }
+
+  const user = await User.findById(req.user._id);
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+  if (!isPasswordCorrect) {
+    throw new apiError(400, "Current Password is Invalid");
+  }
+  if (newPassword == oldPassword) {
+    throw new apiError(400, "New Password cannot be same as old password");
+  }
+
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, "Password Changed Successfully"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  return res
+    .status(200)
+    .json(new apiResponse(200, req.user, "Current user fetched Successfully"));
+});
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { email, fullname } = req.body;
+  if (!email && !fullname) {
+    throw new apiError(400, "All fields are required");
+  }
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        email,
+        fullname,
+      },
+    },
+    {
+      new: true,
+    }
+  ).select("-password -refreshToken");
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, user, "Account Details Updated!"));
+});
+
+//Dont forget to give multer as a middleware
+const updateAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new apiError(401, "Avatar is required!");
+  }
+  const avatarLocalPath = req.file.path; //because only one file would be passed at a time
+  const newAvatar = await fileUploader(avatarLocalPath);
+  if (!newAvatar) {
+    throw new apiError(401, "Action Failed");
+  }
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        avatar: newAvatar.url,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  return res
+    .status(200)
+    .json(new apiResponse(200, user, "Avatar Updated Successfully"));
+});
+
+//Dont forget to give multer as a middleware
+const updateCoverImage = asyncHandler(async (req, res) => {
+  let newCoverImageUrl;
+  if (req.file) {
+    const coverImageLocalPath = req.file.path; //because only one file would be passed at a time
+    const newCoverImage = await fileUploader(coverImageLocalPath);
+    newCoverImageUrl = newCoverImage.url;
+  }
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        coverImage: newCoverImageUrl || "",
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  return res
+    .status(200)
+    .json(new apiResponse(200, user, "CoverImage Updated Successfully"));
+});
+
+export {
+  registerUser,
+  loginUser,
+  logOutUser,
+  refreshAccessToken,
+  updateCurrentPassword,
+  getCurrentUser,
+  updateAccountDetails,
+  updateAvatar,
+  updateCoverImage,
+};
