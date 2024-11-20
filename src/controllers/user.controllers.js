@@ -13,10 +13,9 @@ const generateAccessAndRefreshTokens = async (newUser) => {
 
     return { accessToken, refreshToken };
   } catch (error) {
-    throw new apiError(
-      500,
-      "Something went Wrong while Generating refresh and access tokens"
-    );
+    res.status(500).json({
+      error: error.message
+    })
   }
 };
 const registerUser = asyncHandler(async (req, res) => {
@@ -102,7 +101,7 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 
   if (!newUser) {
-    throw new apiError(404, "User doesn't exist");
+    throw new apiError(400, "User doesn't exist");
   }
 
   const isPasswordValid = await newUser.isPasswordCorrect(password);
@@ -150,7 +149,7 @@ const logOutUser = asyncHandler(async (req, res) => {
     { $set: { refreshToken: "" } },
     { new: true }
   ); //new true gives update user as result
-  console.log(loggedInUser)
+  console.log(loggedInUser);
 
   const options = {
     httpOnly: true,
@@ -162,4 +161,27 @@ const logOutUser = asyncHandler(async (req, res) => {
     .clearCookie("refreshToken", options)
     .json(new apiResponse(201, {}, "User logged out"));
 });
-export { registerUser, loginUser, logOutUser };
+
+const refreshAccessToken = asyncHandler(async(req,res)=>{
+    const incomingRefreshToken= req.cookies.refreshToken
+    if(!incomingRefreshToken){
+      throw new apiError(401,"Unauthorized access")
+    }
+    const user= await User.findById(req.user._id)
+    if(incomingRefreshToken!=user.refreshToken){
+      throw new apiError("Refresh Token expired or Invalid!")
+    }
+    const {accessToken,refreshToken}=await generateAccessAndRefreshTokens(user)
+    const options={
+      httpOnly:true,
+      secure:true
+    }
+    res
+    .status(201)
+    .cookie('accessToken',accessToken,options)
+    .cookie('refreshToken',refreshToken,options)
+    .json(new apiResponse(201, "Access Token is Refreshed"))
+
+})
+
+export { registerUser, loginUser, logOutUser, refreshAccessToken };
