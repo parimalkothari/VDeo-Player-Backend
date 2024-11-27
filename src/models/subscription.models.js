@@ -1,15 +1,15 @@
 import mongoose from "mongoose";
-import asyncHandler from "../utils/asyncHandler";
 
 const subscriptionSchema=new mongoose.Schema({
-    subscriber:{
+    subscriber:{ //One who subscribes
         type: mongoose.Schema.Types.ObjectId,
         ref:"User"
     },
-    channel:{
+    channel:{ //One whom subscriber subscribes
         type: mongoose.Schema.Types.ObjectId,
         ref:"User"
     }
 },{timestamps:true})
 
-export const Subscription=new mongoose.model('Subscription',subscriptionSchema)
+const Subscription=new mongoose.model('Subscription',subscriptionSchema)
+export default Subscription

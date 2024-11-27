@@ -1,6 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import apiError from "../utils/apiError.js";
 import User from "../models/user.models.js";
+import Subscription from "../models/subscription.models.js";
 import fileUploader from "../utils/cloudinary.js";
 import apiResponse from "../utils/apiResponse.js";
 
@@ -294,6 +295,62 @@ const updateCoverImage = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, user, "CoverImage Updated Successfully"));
 });
 
+const getUserChannelProfile=asyncHandler(async(req,res)=>{
+  const {username}=req.params
+  if(!username || !username.trim()){
+    throw new apiError(401,"Username is required")
+  }
+  const channel=await User.aggregate([
+    {
+      $match: {
+        username: username.toLowerCase()
+      }
+    },
+    {
+      $lookup:{
+        from: "subscriptions",  //Subscriber as appears in mongodb
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers"
+      }
+    },
+    {
+      $addFields:{
+        subscribersCount: {
+          $size: "$subscribers"
+        },
+        isSubscribed:{
+          $cond:{
+            if: {$in: [req.user._id,"$subscribers.subscriber"]},
+            then:true,
+            else:false
+          }
+        }
+
+      }
+    },
+    {
+      $project:{
+        _id:0,
+        fullname: 1,
+        email: 1,
+        username: 1,
+        avatar:1,
+        coverImage: 1,
+        subscribersCount:1,
+        isSubscribed:1
+      }
+    }
+  ])
+  if(!channel.length){
+    throw new apiError(404,"Channel doesn't exist")
+  }
+  console.log(channel)
+  return res
+  .status(200)
+  .json(new apiResponse(200,channel[0],"Channel details fetched successfully"))
+})
+
 export {
   registerUser,
   loginUser,
@@ -304,4 +361,5 @@ export {
   updateAccountDetails,
   updateAvatar,
   updateCoverImage,
+  getUserChannelProfile,
 };
