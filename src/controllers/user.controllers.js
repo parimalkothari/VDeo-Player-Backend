@@ -2,8 +2,10 @@ import asyncHandler from "../utils/asyncHandler.js";
 import apiError from "../utils/apiError.js";
 import User from "../models/user.models.js";
 import Subscription from "../models/subscription.models.js";
+import Video  from "../models/video.models.js";
 import fileUploader from "../utils/cloudinary.js";
 import apiResponse from "../utils/apiResponse.js";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async (newUser) => {
   try {
@@ -351,6 +353,64 @@ const getUserChannelProfile=asyncHandler(async(req,res)=>{
   .json(new apiResponse(200,channel[0],"Channel details fetched successfully"))
 })
 
+const getWatchHistory=asyncHandler(async(req,res)=>{
+  const watchHistory=await User.aggregate([
+    {
+      $match:{
+        _id: new mongoose.Types.ObjectId(req.user._id)
+      }
+    },
+    {
+      $lookup:{
+        from: "videos",
+        localField:"watchHistory",
+        foreignField:"_id",
+        as: "watchHistory",
+        pipeline:[
+          {
+            $lookup:{
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+            }
+          },
+          {
+            $addFields:{
+              owner:{
+                $first: "$owner"   //as result is inside array hence we add it as a field itself
+              }
+            }
+          },
+          {
+            $project:{
+              fullname:1,
+              username:1,
+              avatar:1
+            }
+          }
+        ]
+      }
+    },{
+      $addFields:{
+        watchHistory:"$watchHistory"
+      }
+    },
+    {
+      $project:{
+        username: 1,
+        fullname: 1,
+        watchHistory: 1
+      }
+    }
+  ])
+
+
+  res.
+  status(200)
+  .json(new apiResponse(200,watchHistory[0],"Watch History Fetched Successfully"))
+})
+
 export {
   registerUser,
   loginUser,
@@ -362,4 +422,5 @@ export {
   updateAvatar,
   updateCoverImage,
   getUserChannelProfile,
+  getWatchHistory
 };

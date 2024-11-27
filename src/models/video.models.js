@@ -32,7 +32,7 @@ const videoSchema = new mongoose.Schema(
       default: 0,
     },
     isPublished: {
-      type: boolean,
+      type: Boolean,
       default: true,
     },
   },
@@ -41,4 +41,5 @@ const videoSchema = new mongoose.Schema(
 
 videoSchema.plugin(mongooseAggregatePaginate); // Can write aggregate queries with mongoose now
 
-export const Video = new mongoose.model("Video", videoSchema);
+const Video = new mongoose.model("Video", videoSchema);
+export default Video
