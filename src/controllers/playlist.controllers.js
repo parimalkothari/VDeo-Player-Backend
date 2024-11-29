@@ -10,7 +10,7 @@ import Video from "../models/video.models.js";
 const createPlaylist = asyncHandler(async (req, res) => {
   //TODO: create playlist
   const { name, description } = req.body;
-  if (!name) {
+  if (!name || !name.trim()) {
     throw new apiError(403, "Playlist name is required");
   }
   const owner = req.user._id;
@@ -47,6 +47,91 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         owner: new mongoose.Types.ObjectId(userId),
       },
     },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "videos",
+        foreignField: "_id",
+        as: "videos",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    avatar: 1,
+                    username: 1,
+                    fullname: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: {
+                $first: "$owner",
+              },
+            },
+          },
+          {
+            //Because I am looking at User field but I am currently at Video Field
+            $project: {
+              _id: 1,
+              thumbnail: 1,
+              videoFile: 1,
+              title: 1,
+              description: 1,
+              duration: 1,
+              views: 1,
+              owner: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        videos: "$videos", //because multiple videos hence no first
+      },
+    },
+    {
+      $lookup: {
+        //this field is not necessary because the user id is given as parameter no need for who created when it is asked by themselves
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "createdBy",
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              avatar: 1,
+              fullname: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        createdBy: {
+          $first: "$createdBy", //Because only one creator hence first
+        },
+      },
+    },
+    {
+      $project: {
+        createdBy: 1,
+        name: 1,
+        description: 1,
+        videos: 1,
+      },
+    },
   ]);
   if (!playlists.length) {
     throw new apiError(404, "No Playlists found for this user");
@@ -62,7 +147,98 @@ const getPlaylistById = asyncHandler(async (req, res) => {
   if (!playlistId || !isValidObjectId(playlistId)) {
     throw new apiError(401, "Playlist Id is Invalid");
   }
-  const playlist = await Playlist.findById(playlistId);
+  const playlist = await Playlist.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(playlistId),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "videos",
+        foreignField: "_id",
+        as: "videos",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    fullname: 1,
+                    avatar: 1,
+                    username: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: {
+                $first: "$owner",
+              },
+            },
+          },
+          {
+            //Because I am looking at User field but I am currently at Video Field
+            $project: {
+              _id: 1,
+              thumbnail: 1,
+              videoFile: 1,
+              title: 1,
+              description: 1,
+              duration: 1,
+              views: 1,
+              owner: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        videos: "$videos",
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "createdBy",
+        pipeline: [
+          {
+            $project: {
+              fullname: 1,
+              avatar: 1,
+              username: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        createdBy: {
+          $first: "$createdBy",
+        },
+      },
+    },
+    {
+      $project: {
+        //project uska hota hai jaha se lookup hua naa ki jahaa lookup hua
+        name: 1,
+        description: 1,
+        videos: 1,
+        createdBy: 1,
+      },
+    },
+  ]);
   if (!playlist) {
     throw new apiError(404, "Playlist does not exist");
   }
@@ -204,7 +380,7 @@ const updatePlaylist = asyncHandler(async (req, res) => {
   if (!playlistId || !isValidObjectId(playlistId)) {
     throw new apiError(400, "Invalid playlist Id");
   }
-  if (!name) {
+  if (!name || !name.trim()) {
     throw new apiError(400, "Playlist Name is required");
   }
   const playlist = await Playlist.findById(playlistId);
