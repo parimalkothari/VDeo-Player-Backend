@@ -63,6 +63,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
               pipeline: [
                 {
                   $project: {
+                    _id:0,
                     avatar: 1,
                     username: 1,
                     fullname: 1,
@@ -81,7 +82,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
           {
             //Because I am looking at User field but I am currently at Video Field
             $project: {
-              _id: 1,
+              _id: 0,
               thumbnail: 1,
               videoFile: 1,
               title: 1,
@@ -100,33 +101,8 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
       },
     },
     {
-      $lookup: {
-        //this field is not necessary because the user id is given as parameter no need for who created when it is asked by themselves
-        from: "users",
-        localField: "owner",
-        foreignField: "_id",
-        as: "createdBy",
-        pipeline: [
-          {
-            $project: {
-              username: 1,
-              avatar: 1,
-              fullname: 1,
-            },
-          },
-        ],
-      },
-    },
-    {
-      $addFields: {
-        createdBy: {
-          $first: "$createdBy", //Because only one creator hence first
-        },
-      },
-    },
-    {
       $project: {
-        createdBy: 1,
+        _id:0,
         name: 1,
         description: 1,
         videos: 1,
@@ -169,6 +145,7 @@ const getPlaylistById = asyncHandler(async (req, res) => {
               pipeline: [
                 {
                   $project: {
+                    _id:0,
                     fullname: 1,
                     avatar: 1,
                     username: 1,
@@ -187,7 +164,7 @@ const getPlaylistById = asyncHandler(async (req, res) => {
           {
             //Because I am looking at User field but I am currently at Video Field
             $project: {
-              _id: 1,
+              _id: 0,
               thumbnail: 1,
               videoFile: 1,
               title: 1,
@@ -214,6 +191,7 @@ const getPlaylistById = asyncHandler(async (req, res) => {
         pipeline: [
           {
             $project: {
+              _id:0,
               fullname: 1,
               avatar: 1,
               username: 1,
@@ -232,6 +210,7 @@ const getPlaylistById = asyncHandler(async (req, res) => {
     {
       $project: {
         //project uska hota hai jaha se lookup hua naa ki jahaa lookup hua
+        _id:0,
         name: 1,
         description: 1,
         videos: 1,
