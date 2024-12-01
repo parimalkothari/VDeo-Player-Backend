@@ -11,7 +11,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     limit = 10,
     query = "",
     sortBy = "createdAt",
-    sortType = 1,
+    sortType = "asc",
     userId = "",
   } = req.query;
   //TODO: get all videos based on query, sort, pagination
