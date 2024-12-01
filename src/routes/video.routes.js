@@ -28,7 +28,7 @@ videoRouter.route("/add-video").post(
 );
 
 videoRouter
-  .route("v/:videoId")
+  .route("/v/:videoId")
   .get(getVideoById)
   .patch(
     upload.fields([
