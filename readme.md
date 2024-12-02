@@ -72,7 +72,7 @@ The **VDeo-Player-Backend** is a RESTful API built with Node.js and Express.js t
 3. Set up a `.env` file with the required environment variables:
 
 - `PORT`=8000
-- `MONGODB_URI`=mongodb+srv://yourMongoDbUser:yourMongoDbPassword@cluster.mongodb.net
+- `MONGODB_URI`=mongodb+srv://yourMongoDbUser\:yourMongoDbPassword\@cluster.mongodb.net
 - `CORS_ORIGIN`=\*
 - `ACCESS_TOKEN_SECRET`=your-access-token-secret
 - `ACCESS_TOKEN_EXPIRY`=1d
