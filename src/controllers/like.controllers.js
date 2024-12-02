@@ -12,6 +12,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
   }
   const liked = await Like.findOne({
     video: videoId,
+    likedBy: req.user._id,
   });
   if (!liked) {
     const likeVideo = await Like.create({
@@ -36,6 +37,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
   }
   const liked = await Like.findOne({
     comment: commentId,
+    likedBy: req.user._id,
   });
   if (!liked) {
     const likeComment = await Like.create({
@@ -62,6 +64,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
   }
   const liked = await Like.findOne({
     tweet: tweetId,
+    likedBy: req.user._id,
   });
   if (!liked) {
     const likeTweet = await Like.create({
