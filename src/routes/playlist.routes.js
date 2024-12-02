@@ -26,4 +26,4 @@ playlistRouter
   .route("/remove/:videoId/:playlistId")
   .delete(removeVideoFromPlaylist);
 
-export default playlistRouter
+export default playlistRouter;

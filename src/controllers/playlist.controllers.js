@@ -63,7 +63,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
               pipeline: [
                 {
                   $project: {
-                    _id:0,
+                    _id: 0,
                     avatar: 1,
                     username: 1,
                     fullname: 1,
@@ -102,7 +102,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
     },
     {
       $project: {
-        _id:0,
+        _id: 0,
         name: 1,
         description: 1,
         videos: 1,
@@ -145,7 +145,7 @@ const getPlaylistById = asyncHandler(async (req, res) => {
               pipeline: [
                 {
                   $project: {
-                    _id:0,
+                    _id: 0,
                     fullname: 1,
                     avatar: 1,
                     username: 1,
@@ -191,7 +191,7 @@ const getPlaylistById = asyncHandler(async (req, res) => {
         pipeline: [
           {
             $project: {
-              _id:0,
+              _id: 0,
               fullname: 1,
               avatar: 1,
               username: 1,
@@ -210,7 +210,7 @@ const getPlaylistById = asyncHandler(async (req, res) => {
     {
       $project: {
         //project uska hota hai jaha se lookup hua naa ki jahaa lookup hua
-        _id:0,
+        _id: 0,
         name: 1,
         description: 1,
         videos: 1,

@@ -41,7 +41,6 @@ videoRouter
   )
   .delete(deleteVideo);
 
-  
-  videoRouter.route("/t/:videoId").patch(togglePublishStatus);
-  videoRouter.route("/search").get(getAllVideos);
+videoRouter.route("/t/:videoId").patch(togglePublishStatus);
+videoRouter.route("/search").get(getAllVideos);
 export default videoRouter;

@@ -1,1 +1,1 @@
-export const DB_NAME= "MONGODBPK"
+export const DB_NAME = "MONGODBPK";

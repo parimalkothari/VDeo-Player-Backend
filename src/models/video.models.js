@@ -42,4 +42,4 @@ const videoSchema = new mongoose.Schema(
 videoSchema.plugin(mongooseAggregatePaginate); // Can write aggregate queries with mongoose now
 
 const Video = new mongoose.model("Video", videoSchema);
-export default Video
+export default Video;

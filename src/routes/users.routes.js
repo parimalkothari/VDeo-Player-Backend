@@ -40,7 +40,10 @@ userRouter
   .route("/change-coverImage")
   .patch(upload.single("coverImage"), verifyJWT, updateCoverImage);
 userRouter.route("/c/:username").get(verifyJWT, getUserChannelProfile);
-userRouter.route("/watch-history").get(verifyJWT, getWatchHistory).delete(verifyJWT,clearWatchHistory);
+userRouter
+  .route("/watch-history")
+  .get(verifyJWT, getWatchHistory)
+  .delete(verifyJWT, clearWatchHistory);
 userRouter
   .route("/watch-history/:videoId")
   .post(verifyJWT, addVideoToWatchHistory)

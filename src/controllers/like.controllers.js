@@ -283,7 +283,7 @@ const getLikedComments = asyncHandler(async (req, res) => {
       $replaceRoot: {
         newRoot: "$comment", // Promote the video content to the root level
       },
-    }
+    },
   ]);
 
   if (!likedComments.length) {
