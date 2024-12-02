@@ -3,6 +3,7 @@ import Comment from "../models/comment.models.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import Like from '../models/like.models.js'
 
 const getVideoComments = asyncHandler(async (req, res) => {
   //TODO: get all comments for a video
@@ -128,6 +129,9 @@ const deleteComment = asyncHandler(async (req, res) => {
   const isDeleted = await Comment.deleteOne({
     _id: commentId,
   });
+  await Like.deleteMany({
+    comment:commentId
+  })
   res.status(200).json(new apiResponse(200, isDeleted, "Comment deleted"));
 });
 

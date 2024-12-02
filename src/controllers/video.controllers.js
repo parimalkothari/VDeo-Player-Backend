@@ -4,6 +4,8 @@ import apiError from "../utils/apiError.js";
 import fileUploader from "../utils/cloudinary.js";
 import apiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import Like from "../models/like.models.js";
+import Comment from '../models/comment.models.js'
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
@@ -254,6 +256,12 @@ const deleteVideo = asyncHandler(async (req, res) => {
   await Video.deleteOne({
     _id: videoId,
   });
+  await Like.deleteMany({
+    video: videoId
+  })
+  await Comment.deleteMany({
+    video: videoId
+  })
   res.status(200).json(new apiResponse(200, [], "Video deleted"));
 });
 

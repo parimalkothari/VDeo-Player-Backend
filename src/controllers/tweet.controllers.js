@@ -3,6 +3,7 @@ import Tweet from "../models/tweet.models.js"
 import asyncHandler from '../utils/asyncHandler.js'
 import apiError from '../utils/apiError.js'
 import apiResponse from '../utils/apiResponse.js'
+import Like from "../models/like.models.js"
 
 const createTweet = asyncHandler(async (req, res) => {
     //TODO: create tweet
@@ -88,6 +89,9 @@ const deleteTweet = asyncHandler(async (req, res) => {
     }
     await tweet.deleteOne({
         _id:tweetId
+    })
+    await Like.deleteMany({
+        tweet: tweetId
     })
     res
     .status(200)
