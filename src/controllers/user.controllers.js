@@ -4,6 +4,7 @@ import User from "../models/user.models.js";
 import fileUploader from "../utils/cloudinary.js";
 import apiResponse from "../utils/apiResponse.js";
 import mongoose, { isValidObjectId } from "mongoose";
+import deleteFromCloudinary from "../utils/deleteFromCloudinary.js";
 
 const generateAccessAndRefreshTokens = async (newUser) => {
   try {
@@ -250,6 +251,7 @@ const updateAvatar = asyncHandler(async (req, res) => {
   if (!req.file) {
     throw new apiError(401, "Avatar is required!");
   }
+  await deleteFromCloudinary(req.user.avatar)
   const avatarLocalPath = req.file.path; //because only one file would be passed at a time
   const newAvatar = await fileUploader(avatarLocalPath);
   if (!newAvatar) {
@@ -275,6 +277,9 @@ const updateAvatar = asyncHandler(async (req, res) => {
 const updateCoverImage = asyncHandler(async (req, res) => {
   let newCoverImageUrl;
   if (req.file) {
+    if(req.user.coverImage){
+      await deleteFromCloudinary(req.user.coverImage)
+    }
     const coverImageLocalPath = req.file.path; //because only one file would be passed at a time
     const newCoverImage = await fileUploader(coverImageLocalPath);
     newCoverImageUrl = newCoverImage.url;

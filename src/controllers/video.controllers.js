@@ -6,6 +6,7 @@ import apiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import Like from "../models/like.models.js";
 import Comment from "../models/comment.models.js";
+import deleteFromCloudinary from "../utils/deleteFromCloudinary.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
@@ -212,6 +213,7 @@ const updateVideo = asyncHandler(async (req, res) => {
   if (video.owner.toString() != req.user._id) {
     throw new apiError(403, "Action not allowed");
   }
+  await deleteFromCloudinary(video.thumbnail)
   const thumbnailPath = req.files.thumbnail[0].path;
   const thumbnail = await fileUploader(thumbnailPath);
   if (!thumbnail) {
@@ -256,6 +258,9 @@ const deleteVideo = asyncHandler(async (req, res) => {
   await Video.deleteOne({
     _id: videoId,
   });
+  await deleteFromCloudinary(video.videoFile)
+  await deleteFromCloudinary(video.thumbnail)
+  
   await Like.deleteMany({
     video: videoId,
   });
