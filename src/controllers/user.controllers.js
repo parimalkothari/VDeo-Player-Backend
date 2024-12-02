@@ -3,7 +3,7 @@ import apiError from "../utils/apiError.js";
 import User from "../models/user.models.js";
 import fileUploader from "../utils/cloudinary.js";
 import apiResponse from "../utils/apiResponse.js";
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 const generateAccessAndRefreshTokens = async (newUser) => {
   try {
@@ -352,6 +352,98 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     );
 });
 
+const addVideoToWatchHistory = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  if (!videoId || !isValidObjectId(videoId)) {
+    throw new apiError(401, "Invalid videoId");
+  }
+  const user = await User.findById(req.user._id);
+
+  if (user.watchHistory.includes(videoId)) {
+    throw new apiError(403, "video already present in watch history");
+  }
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $addToSet: {
+        watchHistory: videoId,
+      },
+    },
+    { new: true }
+  );
+  if (!user) {
+    throw new apiError(404, "Something went wrong");
+  }
+  res
+    .status(200)
+    .json(
+      new apiResponse(
+        200,
+        { watchHistory: updatedUser.watchHistory },
+        "watch history updated"
+      )
+    );
+});
+
+const deleteVideoFromWatchHistory = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  if (!videoId || !isValidObjectId(videoId)) {
+    throw new apiError(401, "Invalid videoId");
+  }
+  const user = await User.findById(req.user._id);
+
+  if (!user.watchHistory.includes(videoId)) {
+    throw new apiError(404, "video not present in watch history");
+  }
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $pull: {
+        watchHistory: videoId,
+      },
+    },
+    { new: true }
+  );
+  if (!user) {
+    throw new apiError(404, "Something went wrong");
+  }
+  res
+    .status(200)
+    .json(
+      new apiResponse(
+        200,
+        { watchHistory: updatedUser.watchHistory },
+        "watch history updated"
+      )
+    );
+});
+
+const clearWatchHistory = asyncHandler(async (req, res) => {
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        watchHistory: [],
+      },
+    },
+    { new: true }
+  );
+
+  if (!user) {
+    throw new apiError(500, "Something went wrong");
+  }
+
+  res
+    .status(200)
+    .json(
+      new apiResponse(
+        200,
+        { watchHistory: user.watchHistory },
+        "watch history cleared successfully"
+      )
+    );
+});
+
 const getWatchHistory = asyncHandler(async (req, res) => {
   const watchHistory = await User.aggregate([
     {
@@ -375,7 +467,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
               pipeline: [
                 {
                   $project: {
-                    _id:0,
+                    _id: 0,
                     fullname: 1,
                     username: 1,
                     avatar: 1,
@@ -391,6 +483,18 @@ const getWatchHistory = asyncHandler(async (req, res) => {
               },
             },
           },
+          {
+            $project: {
+              _id: 0,
+              thumbnail: 1,
+              videoFile: 1,
+              title: 1,
+              description: 1,
+              duration: 1,
+              views: 1,
+              owner: 1,
+            },
+          },
         ],
       },
     },
@@ -401,7 +505,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     },
     {
       $project: {
-        _id:0,
+        _id: 0,
         username: 1,
         fullname: 1,
         watchHistory: 1,
@@ -432,4 +536,7 @@ export {
   updateCoverImage,
   getUserChannelProfile,
   getWatchHistory,
+  addVideoToWatchHistory,
+  deleteVideoFromWatchHistory,
+  clearWatchHistory,
 };
