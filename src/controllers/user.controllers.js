@@ -1,6 +1,12 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import apiError from "../utils/apiError.js";
 import User from "../models/user.models.js";
+import Comment from "../models/comment.models.js";
+import Tweet from "../models/tweet.models.js";
+import Video from "../models/video.models.js";
+import Like from "../models/like.models.js";
+import Playlist from "../models/playlist.models.js";
+import Subscription from "../models/subscription.models.js";
 import fileUploader from "../utils/cloudinary.js";
 import apiResponse from "../utils/apiResponse.js";
 import mongoose, { isValidObjectId } from "mongoose";
@@ -146,7 +152,7 @@ const loginUser = asyncHandler(async (req, res) => {
 const logOutUser = asyncHandler(async (req, res) => {
   //clear cookies
   //remove refresh token from database (for this you need user...accessed by middleware)
-  const loggedInUser = await User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     req.user._id,
     { $set: { refreshToken: "" } },
     { new: true }
@@ -161,6 +167,58 @@ const logOutUser = asyncHandler(async (req, res) => {
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
     .json(new apiResponse(201, {}, "User logged out"));
+});
+
+const deleteAccount = asyncHandler(async (req, res) => {
+ 
+  //Delete from cloudinary
+  await deleteFromCloudinary(req.user.avatar);
+  if (req.user.coverImage) {
+    await deleteFromCloudinary(req.user.coverImage);
+  }
+  const videos=await Video.find({
+    owner:req.user._id
+  })
+  for (const video of videos) {
+    await deleteFromCloudinary(video.thumbnail);
+    await deleteFromCloudinary(video.videoFile);
+  }
+
+  //delete everything related
+  await Comment.deleteMany({
+    owner: req.user._id,
+  });
+  await Tweet.deleteMany({
+    owner: req.user._id,
+  });
+  await Video.deleteMany({
+    owner: req.user._id,
+  });
+  await Subscription.deleteMany({
+    $or: [{ channel: req.user._id }, { subscriber: req.user._id }],
+  });
+  await Playlist.deleteMany({
+    owner: req.user._id,
+  });
+  await Like.deleteMany({
+    likedBy: req.user._id,
+  });
+
+  //delete user
+  await User.deleteOne({
+    _id: req.user._id,
+  });
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new apiResponse(200, [], "account deleted successfully"));
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
@@ -251,7 +309,7 @@ const updateAvatar = asyncHandler(async (req, res) => {
   if (!req.file) {
     throw new apiError(401, "Avatar is required!");
   }
-  await deleteFromCloudinary(req.user.avatar)
+  await deleteFromCloudinary(req.user.avatar);
   const avatarLocalPath = req.file.path; //because only one file would be passed at a time
   const newAvatar = await fileUploader(avatarLocalPath);
   if (!newAvatar) {
@@ -277,8 +335,8 @@ const updateAvatar = asyncHandler(async (req, res) => {
 const updateCoverImage = asyncHandler(async (req, res) => {
   let newCoverImageUrl;
   if (req.file) {
-    if(req.user.coverImage){
-      await deleteFromCloudinary(req.user.coverImage)
+    if (req.user.coverImage) {
+      await deleteFromCloudinary(req.user.coverImage);
     }
     const coverImageLocalPath = req.file.path; //because only one file would be passed at a time
     const newCoverImage = await fileUploader(coverImageLocalPath);
@@ -362,6 +420,10 @@ const addVideoToWatchHistory = asyncHandler(async (req, res) => {
   if (!videoId || !isValidObjectId(videoId)) {
     throw new apiError(401, "Invalid videoId");
   }
+  const video=await Video.findById(videoId)
+  if(!video){
+    throw new apiError(404,"Video not found")
+  }
   const user = await User.findById(req.user._id);
 
   if (user.watchHistory.includes(videoId)) {
@@ -394,6 +456,10 @@ const deleteVideoFromWatchHistory = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   if (!videoId || !isValidObjectId(videoId)) {
     throw new apiError(401, "Invalid videoId");
+  }
+  const video=await Video.findById(videoId)
+  if(!video){
+    throw new apiError(404,"Video not found")
   }
   const user = await User.findById(req.user._id);
 
@@ -533,6 +599,7 @@ export {
   registerUser,
   loginUser,
   logOutUser,
+  deleteAccount,
   refreshAccessToken,
   updateCurrentPassword,
   getCurrentUser,

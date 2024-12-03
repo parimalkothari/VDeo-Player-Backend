@@ -4,6 +4,7 @@ import apiError from "../utils/apiError.js";
 import Playlist from "../models/playlist.models.js";
 import mongoose, { isValidObjectId } from "mongoose";
 import Video from "../models/video.models.js";
+import User from '../models/user.models.js'
 
 // import Video from "../models/video.models";
 
@@ -40,6 +41,10 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   if (!userId || !isValidObjectId(userId)) {
     throw new apiError(401, "UserId is Invalid");
+  }
+  const user=await User.findById(userId)
+  if(!user){
+    throw new apiError(404,"user not found")
   }
   const playlists = await Playlist.aggregate([
     {
@@ -122,6 +127,10 @@ const getPlaylistById = asyncHandler(async (req, res) => {
   //TODO: get playlist by id
   if (!playlistId || !isValidObjectId(playlistId)) {
     throw new apiError(401, "Playlist Id is Invalid");
+  }
+  const findPlaylist=await Playlist.findById(playlistId)
+  if(!findPlaylist){
+    throw new apiError(404,"Playlist not found")
   }
   const playlist = await Playlist.aggregate([
     {

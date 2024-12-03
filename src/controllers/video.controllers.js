@@ -6,6 +6,7 @@ import apiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import Like from "../models/like.models.js";
 import Comment from "../models/comment.models.js";
+import User from "../models/user.models.js";
 import deleteFromCloudinary from "../utils/deleteFromCloudinary.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -18,6 +19,12 @@ const getAllVideos = asyncHandler(async (req, res) => {
     userId = "",
   } = req.query;
   //TODO: get all videos based on query, sort, pagination
+  if(userId){
+    const user=await User.findById(userId)
+    if(!user){
+      throw new apiError(404,"User not found")
+    }
+  }
   const limitInt = parseInt(limit);
   const pageInt = parseInt(page);
   const videos = await Video.aggregate([
@@ -142,6 +149,10 @@ const getVideoById = asyncHandler(async (req, res) => {
   if (!videoId || !isValidObjectId(videoId)) {
     throw new apiError(401, "Invalid VideoId");
   }
+  const findVideo=await Video.findById(videoId)
+  if(!findVideo){
+    throw new apiError(404,"Video not found")
+  }
   const video = await Video.aggregate([
     {
       $match: {
@@ -210,6 +221,9 @@ const updateVideo = asyncHandler(async (req, res) => {
     throw new apiError(404, "thumbnail is required");
   }
   const video = await Video.findById(videoId);
+  if(!video){
+    throw new apiError(404,"video not found")
+  }
   if (video.owner.toString() != req.user._id) {
     throw new apiError(403, "Action not allowed");
   }

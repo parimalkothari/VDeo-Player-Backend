@@ -14,6 +14,7 @@ import {
   addVideoToWatchHistory,
   deleteVideoFromWatchHistory,
   clearWatchHistory,
+  deleteAccount,
 } from "../controllers/user.controllers.js";
 import upload from "../middlewares/multer.middlewares.js";
 import verifyJWT from "../middlewares/auth.middlewares.js";
@@ -29,6 +30,7 @@ userRouter.route("/register").post(
 
 userRouter.route("/login").post(loginUser);
 userRouter.route("/logout").post(verifyJWT, logOutUser);
+userRouter.route("/delete-account").post(verifyJWT,deleteAccount)
 userRouter.route("/refresh-token").post(verifyJWT, refreshAccessToken);
 userRouter.route("/change-password").patch(verifyJWT, updateCurrentPassword);
 userRouter.route("/current-user").get(verifyJWT, getCurrentUser);

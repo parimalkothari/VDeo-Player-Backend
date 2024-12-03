@@ -1,6 +1,7 @@
 import mongoose, { isValidObjectId } from "mongoose";
 import Video from "../models/video.models.js";
 import Like from "../models/like.models.js";
+import User from "../models/user.models.js";
 import Subscription from "../models/subscription.models.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
@@ -68,10 +69,10 @@ const getChannelStats = asyncHandler(async (req, res) => {
   ]);
 
   const result = {
-    subscribersCount: subscribers[0].subscriberCnt,
-    totalVideos: videos[0].totalVideos,
-    totalViews: videos[0].totalViews,
-    totalVideoLikes: likes[0].totalVideoLikes,
+    subscribersCount: subscribers[0]?.subscriberCnt || 0,
+    totalVideos: videos[0]?.totalVideos ||0,
+    totalViews: videos[0]?.totalViews || 0,
+    totalVideoLikes: likes[0]?.totalVideoLikes || 0,
   };
   res
     .status(200)
@@ -83,6 +84,10 @@ const getChannelVideos = asyncHandler(async (req, res) => {
   const { channelId } = req.params;
   if (!channelId || !isValidObjectId(channelId)) {
     throw new apiError(401, "Invalid channelId");
+  }
+  const channel=await User.findById(channelId)
+  if(!channel){
+    throw new apiError(404,"channel not found")
   }
   const {
     page = 1,

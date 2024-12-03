@@ -1,5 +1,6 @@
 import mongoose, { isValidObjectId } from "mongoose";
 import Comment from "../models/comment.models.js";
+import Video from "../models/video.models.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
@@ -13,6 +14,10 @@ const getVideoComments = asyncHandler(async (req, res) => {
   limit = parseInt(limit);
   if (!videoId || !isValidObjectId(videoId)) {
     throw new apiError(401, "Invalid VideoId");
+  }
+  const video=await Video.findById(videoId)
+  if(!video){
+    throw new apiError(404,"Video not found")
   }
   const comments = await Comment.aggregate([
     {
@@ -74,6 +79,11 @@ const addComment = asyncHandler(async (req, res) => {
   const { content } = req.body;
   if (!content || !content.trim()) {
     throw new apiError(403, "Comments cannot be empty");
+  }
+
+  const video=await Video.findById(videoId)
+  if(!video){
+    throw new apiError(404,"Video not found")
   }
   const comment = await Comment.create({
     content,

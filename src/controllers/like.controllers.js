@@ -1,5 +1,8 @@
 import mongoose, { isValidObjectId } from "mongoose";
 import Like from "../models/like.models.js";
+import Video from "../models/video.models.js";
+import Tweet from "../models/tweet.models.js";
+import Comment from "../models/comment.models.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
@@ -9,6 +12,10 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
   //TODO: toggle like on video
   if (!videoId || !isValidObjectId(videoId)) {
     throw new apiError(401, "invalid videoId");
+  }
+  const video=await Video.findById(videoId)
+  if(!video){
+    throw new apiError(404,"Video not found")
   }
   const liked = await Like.findOne({
     video: videoId,
@@ -34,6 +41,10 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
   //TODO: toggle like on comment
   if (!commentId || !isValidObjectId(commentId)) {
     throw new apiError(401, "invalid commentId");
+  }
+  const comment=await Comment.findById(commentId)
+  if(!comment){
+    throw new apiError(404,"comment not found")
   }
   const liked = await Like.findOne({
     comment: commentId,
@@ -61,6 +72,10 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
   //TODO: toggle like on tweet
   if (!tweetId || !isValidObjectId(tweetId)) {
     throw new apiError(401, "invalid tweetId");
+  }
+  const tweet=await Tweet.findById(tweetId)
+  if(!tweet){
+    throw new apiError(404,"tweet not found")
   }
   const liked = await Like.findOne({
     tweet: tweetId,

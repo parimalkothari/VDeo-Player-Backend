@@ -3,12 +3,17 @@ import asyncHandler from "../utils/asyncHandler.js";
 import Subscription from "../models/subscription.models.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
+import User from "../models/user.models.js";
 
 const toggleSubscription = asyncHandler(async (req, res) => {
   const { channelId } = req.params;
   // TODO: toggle subscription
   if (!channelId || !isValidObjectId(channelId)) {
     throw new apiError(401, "Invalid channelId");
+  }
+  const channel=await User.findById(channelId)
+  if(!channel){
+    throw new apiError(404,"channel not found")
   }
   const subscribed = await Subscription.findOne({
     channel: channelId,
@@ -47,6 +52,11 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
   if (!channelId || !isValidObjectId(channelId)) {
     throw new apiError(401, "Invalid channelId");
   }
+  const channel=await User.findById(channelId)
+  if(!channel){
+    throw new apiError(404,"channel not found")
+  }
+
   const subscribers = await Subscription.aggregate([
     {
       $match: {
@@ -119,6 +129,11 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
   const limitInt = parseInt(limit);
   if (!subscriberId || !isValidObjectId(subscriberId)) {
     throw new apiError(401, "Invalid subscriberId");
+  }
+  const subsciber=await User.findById(subscriberId)
+
+  if(!subsciber){
+    throw new apiError(404,"subscriber not found")
   }
   const channels = await Subscription.aggregate([
     {

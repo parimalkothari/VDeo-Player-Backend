@@ -4,6 +4,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
 import Like from "../models/like.models.js";
+import User from "../models/user.models.js";
 
 const createTweet = asyncHandler(async (req, res) => {
   //TODO: create tweet
@@ -26,6 +27,10 @@ const getUserTweets = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   if (!userId || !isValidObjectId(userId)) {
     throw new apiError(401, "Invalid userId");
+  }
+  const user=await User.findById(userId)
+  if(!user){
+    throw new apiError(404,"user not found")
   }
   const tweets = await Tweet.find({
     owner: userId,
